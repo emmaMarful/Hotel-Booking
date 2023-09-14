@@ -3,6 +3,7 @@ from fpdf import FPDF
 from datetime import datetime
 
 df = pd.read_csv("hotels.csv", dtype={"id": str})
+df_card = pd.read_csv("cards.csv", dtype=str).to_dict(orient="records")
 
 
 class Hotels:
@@ -79,17 +80,38 @@ class ReservationTickets:
         print("Hotel has been booked")
 
 
+class CreditCard:
+    def __init__(self, number):
+        self.number = number
+
+    def credit_validate(self, exp, cvc, holder):
+        card_data = {"number": self.number, "expiration": exp, "holder": holder, "cvc": cvc}
+        if card_data in df_card:
+            return True
+
+
 print("List of hotels:")
 print(df)
+hot_id = [i for i in df["id"]]
 hotel_id = input("Enter the id of the hotel: ")
 
 hotel = Hotels(hotel_id)
 
-if hotel.available():
-    hotel.bookHotel()
-    name = input("Enter your name: ")
+if hotel_id in hot_id:
+    # book a hotel if available
+    if hotel.available():
+        # credit card validation
+        credit_card = CreditCard(number="1234567890123456")
+        if credit_card.credit_validate(exp="12/26", holder="JOHN SMITH", cvc="123"):
+            hotel.bookHotel()
+            name = input("Enter your name: ")
 
-    reservation = ReservationTickets(name, hotel)
-    reservation.generate()
+            reservation = ReservationTickets(name, hotel)
+            reservation.generate()
+        else:
+            print("Enter a correct card")
+    else:
+        print("Hotel is not available")
+
 else:
-    print("Hotel is not available")
+    print("Select an available hotel")
