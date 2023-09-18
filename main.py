@@ -4,7 +4,7 @@ from datetime import datetime
 
 df = pd.read_csv("hotels.csv", dtype={"id": str})
 df_card = pd.read_csv("cards.csv", dtype=str).to_dict(orient="records")
-
+df_card_security = pd.read_csv("card_security.csv", dtype=str)
 
 class Hotels:
 
@@ -90,6 +90,18 @@ class CreditCard:
             return True
 
 
+class creditCardSecurity(CreditCard):
+    def authenticate(self, ent_pass):
+        password = df_card_security.loc[df_card_security["number"] == self.number, "password"].squeeze()
+        if ent_pass == password:
+            return True
+        else:
+            return False
+
+
+
+
+
 print("List of hotels:")
 print(df)
 hot_id = [i for i in df["id"]]
@@ -101,13 +113,17 @@ if hotel_id in hot_id:
     # book a hotel if available
     if hotel.available():
         # credit card validation
-        credit_card = CreditCard(number="1234567890123456")
+        credit_card = creditCardSecurity(number="1234567890123456")
         if credit_card.credit_validate(exp="12/26", holder="JOHN SMITH", cvc="123"):
-            hotel.bookHotel()
-            name = input("Enter your name: ")
+            if credit_card.authenticate(ent_pass="mypass"):
+                hotel.bookHotel()
+                name = input("Enter your name: ")
 
-            reservation = ReservationTickets(name, hotel)
-            reservation.generate()
+                reservation = ReservationTickets(name, hotel)
+                reservation.generate()
+
+            else:
+                print("Validation failed")
         else:
             print("Enter a correct card")
     else:
